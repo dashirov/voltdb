@@ -545,7 +545,7 @@ public final class VoltTable extends VoltTableRow implements JSONString {
         }
 
         @Override
-        protected int getColumnCount() {
+        public int getColumnCount() {
             return VoltTable.this.getColumnCount();
         }
 
@@ -555,7 +555,7 @@ public final class VoltTable extends VoltTableRow implements JSONString {
         }
 
         @Override
-        protected VoltType getColumnType(int columnIndex) {
+        public VoltType getColumnType(int columnIndex) {
             return VoltTable.this.getColumnType(columnIndex);
         }
 
