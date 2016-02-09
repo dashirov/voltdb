@@ -59,6 +59,9 @@
 #include <vector>
 #include <jsoncpp/jsoncpp.h>
 
+#include <execinfo.h>
+#include <cxxabi.h>
+
 class CopyOnWriteTest_TestTableTupleFlags;
 
 namespace voltdb {
@@ -110,6 +113,32 @@ public:
      * backing store
      */
     inline void move(void *address) {
+#ifndef  NDEBUG
+        // When this bug is fixed we can delete this backtrace.
+        if (m_schema == NULL) {
+            void *addrs[128];
+            int frames = backtrace(addrs, 128);
+            char **names = backtrace_symbols(addrs, frames);
+            for (int idx = 0; idx < frames; idx += 1) {
+                std::string line(names[idx]);
+                size_t namepos = line.find("_Z", 0);
+                if (namepos != std::string::npos) {
+                    size_t nameEnd = line.find(" ", namepos);
+                    if (nameEnd != std::string::npos) {
+                        char savedChar = names[idx][nameEnd];
+                        names[idx][nameEnd] = 0;
+                        char *demangledName = abi::__cxa_demangle(names[idx] + namepos, NULL, NULL, NULL);
+                        line.replace(namepos, nameEnd - namepos, std::string(demangledName));
+                        free(demangledName);
+                        demangledName = NULL;
+                        names[idx][nameEnd] = savedChar;
+                    }
+                }
+                std::cerr << idx+1 << ".) " << line << std::endl;
+            }
+            (void)free(names);
+        }
+#endif
         assert(m_schema);
         m_data = reinterpret_cast<char*> (address);
     }
